@@ -1,7 +1,7 @@
 Package: userinput
 Type: Package
 Title: Validating Command Line User Input
-Version: 0.1.0
+Version: 1.0.0
 Author: Philip Eichinski <philip.eichinski@qut.edu.au>
 Maintainer: Philip Eichinski <philip.eichinski@qut.edu.au>
 Description: Provides functions for common user input situations, like confirm,
