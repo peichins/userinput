@@ -251,7 +251,7 @@ ReadInt <- function (msg = "Enter an integer", min = 1, max = NA, default = NULL
 #' will create it without asking. It will only create the directory itself, not parent directories.
 #' e.g. if the user enters /a/b/c and /a/b doesn't exist, it will not create it. But if /a/b exists and
 #'  /a/b/c doesn't exist, it will prompt to create c
-#'  @export
+#' @export
 GetDirectory = function (msg = 'please enter a path to the directory', create.if.missing = FALSE) {
 
     msg <- paste(msg, 'Enter . (dot) for the working directory. Enter blank string to cancel')

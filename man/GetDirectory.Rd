@@ -21,6 +21,5 @@ If it doesn't, it will prompt the user if they want to create it, or if create.i
 will create it without asking. It will only create the directory itself, not parent directories.
 e.g. if the user enters /a/b/c and /a/b doesn't exist, it will not create it. But if /a/b exists and
  /a/b/c doesn't exist, it will prompt to create c
- @export
 }
 
