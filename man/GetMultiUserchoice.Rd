@@ -2,10 +2,10 @@
 % Please edit documentation in R/userinput.R
 \name{GetMultiUserchoice}
 \alias{GetMultiUserchoice}
-\title{allows the user to select 1 or more of the choices,}
+\title{allows the user to select 1 or more of the choices, one by one}
 \usage{
 GetMultiUserchoice(options, choosing.what = "one of the following",
-  default = 1, all = FALSE)
+  default = 1, all = FALSE, numbering = NULL)
 }
 \arguments{
 \item{options}{string vector; list of choices}
@@ -20,6 +20,6 @@ GetMultiUserchoice(options, choosing.what = "one of the following",
 int vector of the choice numbers
 }
 \description{
-allows the user to select 1 or more of the choices,
+allows the user to select 1 or more of the choices, one by one
 }
 

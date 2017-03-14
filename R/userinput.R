@@ -40,31 +40,53 @@ Confirm <- function (msg, default = NULL) {
 #' @param default int if the user just hits enter, this will be chosen
 #' @param allow.range boolean if TRUE, the user can enter something like 2-4 which will return c(2,3,4)
 #' @param optional boolean if TRUE, user can select 0 to return false (i.e. no choice)
+#' @param numbering a vector of ints to use as the choice labels, instead of just numbering them starting at 1. optional
 #' @return int the index of the choice selected by the user
 #' @export
-GetUserChoice <- function (choices, choosing.what = "one of the following", default = 1, allow.range = FALSE, optional = FALSE) {
+GetUserChoice <- function (choices, choosing.what = "one of the following", default = 1, allow.range = FALSE, optional = FALSE, numbers = NULL) {
 
     #todo recursive validation like http://www.rexamples.com/4/Reading%20user%20input
     cat(paste0("choose ", choosing.what, ":\n"))
-    if (optional) {
-        cat(paste0(0:length(choices), ") ", c("none", choices), collapse = '\n'))
-        min <- 0
-    } else {
-        cat(paste0(1:length(choices), ") ", choices, collapse = '\n'))
-        min <- 1
+
+    if (is.null(numbers)) {
+        numbers <- 1:length(choices)
     }
+
+    if (is.logical(optional) && optional) {
+        optional = 0;
+    }
+
+    if (is.numeric(optional)) {
+        choices <- c("none", choices)
+        numbers <- c(optional, numbers)
+    }
+
+    cat(paste0(numbers, ") ", choices, collapse = '\n'))
 
     if (default %in% 1:length(choices)) {
         cat(paste('\ndefault: ', default))
     } else {
         default = NA
     }
-    msg <- paste0("enter int 1 to ",length(choices),": ")
-    choice <- .GetValidatedInt(msg, min = min, max = length(choices), default = default, parse.range = allow.range)
+
+    if (.isConsecutiveNumbers(numbers)) {
+        msg <- paste0("enter int ",min(numbers)," to ",max(numbers),": ")
+    } else {
+        msg <- paste0("enter a number from the list: ")
+    }
+
+    choice <- .GetValidatedInt(msg, in.list = numbers, default = default, parse.range = allow.range)
     return(choice)
 }
 
-#' allows the user to select 1 or more of the choices,
+#' Whether a list of numbers are consecutive
+#' @param numbers numeric
+#' @return logical
+.isConsecutiveNumbers <- function (numbers) {
+    return(max(numbers) - min(numbers) + 1 == length(unique(numbers)))
+}
+
+#' allows the user to select 1 or more of the choices, one by one
 #'
 #' @param options string vector; list of choices
 #' @param choosing.what string; instrucitons for user
@@ -72,7 +94,7 @@ GetUserChoice <- function (choices, choosing.what = "one of the following", defa
 #' @param all boolean; should there be an extra option at the end to choose all the options in the list?
 #' @return int vector of the choice numbers
 #' @export
-GetMultiUserchoice <- function (options, choosing.what = 'one of the following', default = 1, all = FALSE) {
+GetMultiUserchoice <- function (options, choosing.what = 'one of the following', default = 1, all = FALSE, numbering = NULL) {
 
     if (length(options) == 1 && (default == 1 || default == 'all')) {
         # if there was only 1 option and the default is 1 or 'all',
@@ -103,7 +125,7 @@ GetMultiUserchoice <- function (options, choosing.what = 'one of the following',
             # if something has been chosen, change the default to exit
             default = exit.choice
         }
-        last.choice <- GetUserChoice(options, choosing.what, default = default, allow.range = TRUE)
+        last.choice <- GetUserChoice(options, choosing.what, default = default, allow.range = TRUE, numbering = numbering)
         should.exit <- exit.choice %in% last.choice
         should.use.all <- all.choice %in% last.choice
         if (should.use.all) {
@@ -135,8 +157,9 @@ GetMultiUserchoice <- function (options, choosing.what = 'one of the following',
 #' @param equivalents list; Allows the user to enter any of the values in the list which will be interpreted as the corresponding name in the list
 #' @param quit string; If the input equals this, the program will quit. Allows the user to quit during a request for input
 .GetValidatedInt <- function (msg,
-                             max = NA,
+                             max = NULL,
                              min = 1,
+                             in.list = NULL,
                              default = NULL,
                              num.attempts = 0,
                              parse.range = FALSE,
@@ -144,6 +167,11 @@ GetMultiUserchoice <- function (options, choosing.what = 'one of the following',
                              quit =
                                  "Q") {
 
+    # if in.list is set, ignore max and min
+    if (!is.null(in.list)) {
+        max <- NULL
+        min <- NULL
+    }
 
     max.attempts <- 8
     choice <- .ReadLine(paste(msg, " : "))
@@ -158,24 +186,37 @@ GetMultiUserchoice <- function (options, choosing.what = 'one of the following',
 
     if (choice == '' && !is.null(default)) {
         choice <- as.integer(default)
-    } else if (grepl("^[0-9]+$",choice)) {
+    } else if (.IsInt(choice)) {
         choice <- as.integer(choice)
-    } else if (parse.range && grepl("^[0-9]+[ ]*[:-][ ]*[0-9]+$",choice)) {
-        # split by hyphen and parse range
-        values <- regmatches(choice, gregexpr("[0-9]+", choice))
+    } else if (parse.range && .IsRange(choice)) {
+        # split by colon and parse range
+        values <- regmatches(choice, gregexpr("-?[0-9]+", choice))
         choice <- as.integer(values[[1]][1]):as.integer(values[[1]][2])
     }
 
     if (num.attempts > max.attempts) {
         stop("you kept entering an invalid choice, idiot")
-    } else if (class(choice) != 'integer' || (!is.na(max) && max(choice) > max) || (!is.na(min) && min(choice) < min)) {
+    } else if (class(choice) != 'integer' ||
+               (!is.null(max) && max(choice) > max) ||
+               (!is.null(min) && min(choice) < min) ||
+               (!is.null(in.list) && !all(choice %in% in.list))) {
         if (num.attempts == 0) {
             msg <- paste("Invalid choice.", msg)
         }
-        .GetValidatedInt(msg, max = max, min = min, default = default, num.attempts = num.attempts + 1, parse.range = parse.range, equivalents = equivalents)
+        .GetValidatedInt(msg, max = max, min = min, in.list = in.list, default = default, num.attempts = num.attempts + 1, parse.range = parse.range, equivalents = equivalents)
     } else {
         return(choice)
     }
+}
+
+
+.IsInt <- function (str) {
+    return(grepl("^-?[0-9]+$",str))
+}
+
+
+.IsRange <- function (str) {
+    return(grepl("^-?[0-9]+[ ]*:[ ]*-?[0-9]+$",str))
 }
 
 #' Prompts the user to enter an float

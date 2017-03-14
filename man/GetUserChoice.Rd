@@ -5,7 +5,7 @@
 \title{Prompts the user to choose one of the given set of choices}
 \usage{
 GetUserChoice(choices, choosing.what = "one of the following", default = 1,
-  allow.range = FALSE, optional = FALSE)
+  allow.range = FALSE, optional = FALSE, numbers = NULL)
 }
 \arguments{
 \item{choices}{vector of strings}
@@ -17,6 +17,8 @@ GetUserChoice(choices, choosing.what = "one of the following", default = 1,
 \item{allow.range}{boolean if TRUE, the user can enter something like 2-4 which will return c(2,3,4)}
 
 \item{optional}{boolean if TRUE, user can select 0 to return false (i.e. no choice)}
+
+\item{numbering}{a vector of ints to use as the choice labels, instead of just numbering them starting at 1. optional}
 }
 \value{
 int the index of the choice selected by the user
